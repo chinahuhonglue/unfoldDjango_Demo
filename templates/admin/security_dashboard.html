@@ -1,0 +1,171 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+  <h1 style="margin:0;font-size:28px;font-weight:700;">安全态势总览</h1>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    <a href="{% url 'admin:data_asset_changelist' %}" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;text-decoration:none;">资产列表</a>
+    <a href="{% url 'admin:data_vulnerability_changelist' %}" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;text-decoration:none;">漏洞列表</a>
+    <a href="{% url 'admin:data_securityalert_changelist' %}" style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;text-decoration:none;">告警列表</a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:12px;margin-bottom:20px;">
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <div style="color:#6b7280;font-size:13px;">资产总数</div>
+    <div style="font-size:28px;font-weight:700;margin-top:6px;">{{ asset_total }}</div>
+  </div>
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <div style="color:#6b7280;font-size:13px;">启用资产</div>
+    <div style="font-size:28px;font-weight:700;margin-top:6px;color:#059669;">{{ asset_active }}</div>
+  </div>
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <div style="color:#6b7280;font-size:13px;">漏洞总数</div>
+    <div style="font-size:28px;font-weight:700;margin-top:6px;">{{ vul_total }}</div>
+  </div>
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <div style="color:#6b7280;font-size:13px;">待处理漏洞</div>
+    <div style="font-size:28px;font-weight:700;margin-top:6px;color:#d97706;">{{ vul_open }}</div>
+  </div>
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <div style="color:#6b7280;font-size:13px;">告警总数</div>
+    <div style="font-size:28px;font-weight:700;margin-top:6px;">{{ alert_total }}</div>
+  </div>
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <div style="color:#6b7280;font-size:13px;">近24小时告警</div>
+    <div style="font-size:28px;font-weight:700;margin-top:6px;color:#dc2626;">{{ alert_24h }}</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;">
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <h2 style="margin:0 0 12px 0;font-size:18px;">漏洞等级分布（柱状图）</h2>
+    <div id="vulLevelChart" style="height:320px;"></div>
+  </div>
+
+  <div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+    <h2 style="margin:0 0 12px 0;font-size:18px;">告警等级分布（环形图）</h2>
+    <div id="alertLevelChart" style="height:320px;"></div>
+  </div>
+</div>
+
+<div style="padding:14px;border:1px solid #e5e7eb;border-radius:10px;background:#fff;">
+  <h2 style="margin:0 0 10px 0;font-size:18px;">漏洞等级明细</h2>
+  <table style="width:100%;border-collapse:collapse;">
+    <thead>
+      <tr>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e5e7eb;">等级</th>
+        <th style="text-align:left;padding:10px;border-bottom:1px solid #e5e7eb;">数量</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in vul_by_level %}
+      <tr>
+        <td style="padding:10px;border-bottom:1px solid #f3f4f6;">{{ row.name }}</td>
+        <td style="padding:10px;border-bottom:1px solid #f3f4f6;">{{ row.total }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="2" style="padding:10px;">暂无数据</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{{ vul_by_level|json_script:"vul-level-data" }}
+{{ alert_by_level|json_script:"alert-level-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+  const vulRaw = JSON.parse(document.getElementById("vul-level-data").textContent);
+  const alertRaw = JSON.parse(document.getElementById("alert-level-data").textContent);
+
+  const vulContainer = document.getElementById("vulLevelChart");
+  const alertContainer = document.getElementById("alertLevelChart");
+  let vulChart = null;
+  let alertChart = null;
+
+  function buildCharts() {
+    if (!vulContainer || !alertContainer) return;
+    if (!vulContainer.clientWidth || !alertContainer.clientWidth) return;
+
+    vulChart = echarts.getInstanceByDom(vulContainer) || echarts.init(vulContainer);
+    alertChart = echarts.getInstanceByDom(alertContainer) || echarts.init(alertContainer);
+
+    vulChart.setOption({
+      tooltip: { trigger: "axis" },
+      grid: { left: 40, right: 20, top: 30, bottom: 40 },
+      xAxis: {
+        type: "category",
+        data: vulRaw.map(item => item.name),
+        axisTick: { alignWithLabel: true }
+      },
+      yAxis: {
+        type: "value",
+        minInterval: 1
+      },
+      series: [
+        {
+          type: "bar",
+          data: vulRaw.map(item => item.total),
+          barMaxWidth: 42,
+          itemStyle: {
+            color: "#3b82f6",
+            borderRadius: [6, 6, 0, 0]
+          },
+          label: {
+            show: true,
+            position: "top"
+          }
+        }
+      ]
+    });
+
+    alertChart.setOption({
+      tooltip: { trigger: "item" },
+      legend: {
+        bottom: 0
+      },
+      series: [
+        {
+          name: "告警等级",
+          type: "pie",
+          radius: ["45%", "70%"],
+          center: ["50%", "45%"],
+          data: alertRaw.map(item => ({
+            name: item.name,
+            value: item.total
+          })),
+          label: {
+            formatter: "{b}: {c}"
+          }
+        }
+      ]
+    });
+  }
+
+  function resizeCharts() {
+    if (vulChart) vulChart.resize();
+    if (alertChart) alertChart.resize();
+  }
+
+  window.addEventListener("load", function () {
+    buildCharts();
+    requestAnimationFrame(() => requestAnimationFrame(resizeCharts));
+    setTimeout(resizeCharts, 200);
+  });
+
+  window.addEventListener("resize", resizeCharts);
+
+  if (window.ResizeObserver && vulContainer && alertContainer) {
+    const observer = new ResizeObserver(() => {
+      buildCharts();
+      resizeCharts();
+    });
+    observer.observe(vulContainer);
+    observer.observe(alertContainer);
+  }
+</script>
+{% endblock %}
