@@ -17,10 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.shortcuts import redirect
+from data.views import download_memorial_photo, memorial_photo_page
 from secSys.admin_views import security_dashboard
 
 urlpatterns = [
     path("", lambda request: redirect("admin:index"), name="home"),
+
+    path("memorial/", memorial_photo_page, name="memorial_photo_page"),
+    path("memorial/download/", download_memorial_photo, name="memorial_photo_download"),
 
     path("admin/security-dashboard/",admin.site.admin_view(security_dashboard), name="security_dashboard",),
     

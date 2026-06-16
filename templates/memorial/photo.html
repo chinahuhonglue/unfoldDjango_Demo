@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>沱龙峡留念</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Noto Serif CJK SC", "Songti SC", "SimSun", serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .page {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 32px 16px 48px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+    .header {
+      padding: 20px 24px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    .header p {
+      margin: 0;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+    .preview {
+      padding: 16px;
+      background: #fafafa;
+    }
+    .preview img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 20px 24px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 15px;
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+    }
+    .btn-primary {
+      background: #7b0000;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #660000;
+    }
+    .btn-secondary {
+      background: #fff;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    .btn-secondary:hover {
+      background: #f9fafb;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="card">
+      <div class="header">
+        <h1>沱龙峡留念</h1>
+        <p>{{ photo_caption }}</p>
+      </div>
+      <div class="preview">
+        <img src="{% url 'memorial_photo_download' %}?inline=1" alt="{{ photo_caption }}">
+      </div>
+      <div class="actions">
+        <a class="btn btn-primary" href="{% url 'memorial_photo_download' %}" download="{{ photo_filename }}">下载纪念照</a>
+        <a class="btn btn-secondary" href="{% url 'memorial_photo_download' %}?inline=1" target="_blank">在新窗口打开</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

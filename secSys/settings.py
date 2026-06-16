@@ -180,6 +180,11 @@ UNFOLD = {
                         "icon": "dashboard",
                         "link": reverse_lazy("security_dashboard"),
                     },
+                    {
+                        "title": "沱龙峡留念",
+                        "icon": "photo",
+                        "link": reverse_lazy("memorial_photo_page"),
+                    },
                 ],
             },
             {
